@@ -2,12 +2,7 @@
 #include <Wire.h>
 #include "Credentials.h"
 
-// Initialize the Ethernet server library
-// with the IP address and port you want to use
-// (port 80 is default for HTTP):
-Server server(80);
-
-
+Server server(10000);					//port
 int tmp102Address = 0x48;
 
 void setup() 
@@ -24,7 +19,7 @@ void setup()
   }
 
   Serial.begin(9600);
-  Serial.print("IP: ");
+  Serial.print("IP: ");					//IP: 192.168.2.101 - 192.168.2.104
   Serial.println(WiFly.ip());
   
   server.begin();
@@ -32,62 +27,24 @@ void setup()
 
 void loop() 
 {
-  ///////////////////TMP102
-  
-  float fCelsius = getTemperature();
-  char strCelsius[7];
-  dtostrf(fCelsius,3,3,strCelsius);
-  String strSendTemperature = String(strCelsius);
-  Serial.println(strSendTemperature);
-  delay(500);
 
-  //////////////////////////
-
-  
   Client client = server.available();
-  if (client) 
+
+  if(client) 
   {
-	// an http request ends with a blank line
-	
-	Serial.println("New client");
-	
-	boolean current_line_is_blank = true;
+	Serial.println("Client connected");
 	while (client.connected()) 
 	{
-	  if (client.available()) 
-	  {
-		char c = client.read();
-		// if we've gotten to the end of the line (received a newline
-		// character) and the line is blank, the http request has ended,
-		// so we can send a reply
-		if (c == '\n' && current_line_is_blank) 
-		{
-		  // send a standard http response header
-		  client.println("HTTP/1.1 200 OK");
-		  client.println("Content-Type: text/html");
-		  client.println();
-		  
-		  client.print("TMP102 sensor temperature");
-		 
-		  client.print(" is ");
-		  client.print(strSendTemperature);
-		  client.println("<br />");
-		  
-		  break;
-		}
-		if (c == '\n') {
-		  // we're starting a new line
-		  current_line_is_blank = true;
-		} else if (c != '\r') {
-		  // we've gotten a character on the current line
-		  current_line_is_blank = false;
-		}
-	  }
+	  char strCelsius[7];
+
+	  dtostrf(getTemperature(),3,3,strCelsius);
+	  String strSendTemperature = String(strCelsius);
+	  Serial.println(strSendTemperature);
+	  client.println(strSendTemperature);
+	  delay(500);
 	}
-	// give the web browser time to receive the data
-	delay(100);
 	client.stop();
-	Serial.println("Client disonnected");
+	Serial.println("Client disconnected");
   }
 }
 
